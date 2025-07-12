@@ -11,6 +11,12 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 
+@app.before_request
+def handle_head():
+    if request.method == 'HEAD':
+        # Flask won't call route functions for HEAD, so we handle it manually
+        return "", 200
+
 @app.route("/health", methods=["GET", "HEAD"])
 def health_check():
     return "", 200
