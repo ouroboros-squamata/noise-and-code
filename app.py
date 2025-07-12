@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect
+from openai import OpenAI
 import sqlite3
 import openai
 import os
@@ -34,10 +35,14 @@ def submit():
 - Perspective: {perspective}
 """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
+from openai import OpenAI
+
+client = OpenAI()
+
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": prompt}]
+)
 
     content = response.choices[0].message.content
 
