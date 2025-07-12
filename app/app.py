@@ -34,7 +34,7 @@ def init_db():
 def home():
     conn = get_db_connection()
     trending = conn.execute("SELECT id, title FROM blogs ORDER BY views DESC LIMIT 3").fetchall()
-    return render_template("home.html", trending=trending)
+    return render_template("index.html", trending=trending)
 
 @app.route("/generate", methods=["GET", "POST"])
 def generate():
