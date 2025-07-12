@@ -1,4 +1,3 @@
-
 import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
@@ -11,6 +10,10 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
+
+@app.route("/health", methods=["GET", "HEAD"])
+def health_check():
+    return "OK", 200
 
 def init_db():
     with sqlite3.connect("database.db") as conn:
@@ -26,13 +29,13 @@ def init_db():
         """)
         conn.commit()
 
-@app.route("/")
+@app.route("/", methods=["GET", "HEAD"])
 def home():
     with sqlite3.connect("database.db") as conn:
         trending = conn.execute("SELECT id, title FROM blogs ORDER BY views DESC LIMIT 3").fetchall()
     return render_template("index.html", blogs=trending)
 
-@app.route("/generate", methods=["GET", "POST"])
+@app.route("/generate", methods=["GET", "POST", "HEAD"])
 def generate():
     if request.method == "POST":
         idea = request.form["idea"]
@@ -71,7 +74,7 @@ def generate():
         return redirect(url_for("view_blog", blog_id=post_id))
     return render_template("generate.html")
 
-@app.route("/blog/<blog_id>")
+@app.route("/blog/<blog_id>", methods=["GET", "HEAD"])
 def view_blog(blog_id):
     with sqlite3.connect("database.db") as conn:
         blog = conn.execute("SELECT * FROM blogs WHERE id = ?", (blog_id,)).fetchone()
@@ -81,19 +84,19 @@ def view_blog(blog_id):
             return render_template("blog.html", blog=blog)
     return "Blog not found", 404
 
-@app.route("/recent")
+@app.route("/recent", methods=["GET", "HEAD"])
 def recent():
     with sqlite3.connect("database.db") as conn:
         blogs = conn.execute("SELECT id, title FROM blogs ORDER BY created_at DESC LIMIT 10").fetchall()
     return render_template("recent.html", blogs=blogs)
 
-@app.route("/all")
+@app.route("/all", methods=["GET", "HEAD"])
 def all_blogs():
     with sqlite3.connect("database.db") as conn:
         blogs = conn.execute("SELECT id, title FROM blogs ORDER BY created_at DESC").fetchall()
     return render_template("all.html", blogs=blogs)
 
-@app.route("/tags/<tag>")
+@app.route("/tags/<tag>", methods=["GET", "HEAD"])
 def blogs_by_tag(tag):
     with sqlite3.connect("database.db") as conn:
         blogs = conn.execute("SELECT id, title FROM blogs WHERE tags LIKE ?", (f"%{tag}%",)).fetchall()
