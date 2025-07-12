@@ -37,7 +37,7 @@ def home():
     conn = get_db_connection()
     posts = conn.execute("SELECT * FROM blogs ORDER BY views DESC LIMIT 10").fetchall()
     conn.close()
-    return render_template('home.html', posts=posts)
+    return render_template('index.html', posts=posts)
 
 @app.route('/submit', methods=['POST'])
 def submit():
