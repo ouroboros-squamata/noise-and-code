@@ -1,0 +1,14 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>Noise & Code</title></head>
+<body style="background:#111; color:#fff; font-family:Helvetica, sans-serif; padding:2em;">
+  <h1>Trending Belief Blogs</h1>
+  <ul>
+    {% for blog in blogs %}
+      <li><a href="{{ url_for('view_blog', blog_id=blog[0]) }}" style="color:#0af;">{{ blog[1] }}</a></li>
+    {% endfor %}
+  </ul>
+  <p><a href="{{ url_for('generate') }}" style="color:#fff; background:#0af; padding:0.5em;">Create Your Blog</a></p>
+</body>
+</html>
