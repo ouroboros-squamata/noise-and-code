@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+<head><title>Recent Blogs</title></head>
+<body>
+    <h1>Recent Blogs</h1>
+    {% for post in posts %}
+        <h2>{{ post.idea }}</h2>
+        <p><a href="/blog/{{ post.id }}">Read More</a></p>
+    {% endfor %}
+    <a href="/">Back to Home</a>
+</body>
+</html>

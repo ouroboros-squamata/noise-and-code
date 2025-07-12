@@ -1,1 +1,18 @@
-<h1>Noise & Code Blog</h1><p>Trending posts go here.</p>
+<!doctype html>
+<html>
+<head><title>Noise & Code</title></head>
+<body>
+    <h1>Trending Blogs</h1>
+    <form method="POST" action="/submit">
+        <input name="idea" placeholder="Idea" required>
+        <input name="emotion" placeholder="Emotion" required>
+        <input name="perspective" placeholder="Perspective" required>
+        <button type="submit">Generate Blog</button>
+    </form>
+    {% for post in trending %}
+        <h2>{{ post.idea }}</h2>
+        <p><a href="/blog/{{ post.id }}">Read More</a></p>
+    {% endfor %}
+    <a href="/recent">Recent Posts</a> | <a href="/all">All Posts</a>
+</body>
+</html>
