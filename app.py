@@ -1,79 +1,77 @@
-import os
+from flask import Flask, render_template, request, redirect
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for
-from openai import OpenAI
+import openai
+import os
 
 app = Flask(__name__)
-client = OpenAI()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-DB_PATH = "blogs.db"
-if not os.path.exists(DB_PATH):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE blogs (id INTEGER PRIMARY KEY AUTOINCREMENT, idea TEXT, emotion TEXT, perspective TEXT, content TEXT, scientific TEXT, outcome TEXT, views INTEGER DEFAULT 0)''')
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+@app.route("/", methods=["GET", "POST"])
+def home():
+    conn = get_db_connection()
+    posts = conn.execute("SELECT * FROM blogs ORDER BY views DESC LIMIT 10").fetchall()
+    conn.close()
+    return render_template("index.html", trending=posts)
+
+@app.route("/submit", methods=["POST"])
+def submit():
+    idea = request.form["idea"]
+    emotion = request.form["emotion"]
+    perspective = request.form["perspective"]
+
+    prompt = (
+        f"Generate a scientific blog with:
+"
+        f"Idea: {idea}
+"
+        f"Emotion: {emotion}
+"
+        f"Perspective: {perspective}
+"
+        f"Include a scientific basis and a positive outcome."
+    )
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    content = response.choices[0].message.content
+
+    conn = get_db_connection()
+    conn.execute(
+        "INSERT INTO blogs (idea, emotion, perspective, content, views) VALUES (?, ?, ?, ?, 0)",
+        (idea, emotion, perspective, content)
+    )
     conn.commit()
     conn.close()
 
-def generate_blog(idea, emotion, perspective):
-    prompt = f"Generate a scientific blog with:
-Idea: {idea}
-Emotion: {emotion}
-Perspective: {perspective}
-Include a scientific basis and a positive outcome."
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
-    return response.choices[0].message.content
+    return redirect("/")
 
-@app.route("/")
-def home():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT id, idea, content, views FROM blogs ORDER BY views DESC LIMIT 10")
-    trending = c.fetchall()
+@app.route("/recent")
+def recent():
+    conn = get_db_connection()
+    posts = conn.execute("SELECT * FROM blogs ORDER BY id DESC").fetchall()
     conn.close()
-    return render_template("index.html", trending=trending)
+    return render_template("recent.html", posts=posts)
 
-@app.route("/generate", methods=["GET", "POST"])
-def generate():
-    if request.method == "POST":
-        idea = request.form["idea"]
-        emotion = request.form["emotion"]
-        perspective = request.form["perspective"]
-        blog = generate_blog(idea, emotion, perspective)
-
-        # Extract scientific basis and outcome if present
-        scientific = ""
-        outcome = ""
-        if "Scientific Basis:" in blog and "Positive Outcome:" in blog:
-            parts = blog.split("Scientific Basis:")
-            intro = parts[0].strip()
-            scientific_part = parts[1].split("Positive Outcome:")
-            scientific = scientific_part[0].strip()
-            outcome = scientific_part[1].strip()
-            content = intro
-        else:
-            content = blog
-
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("INSERT INTO blogs (idea, emotion, perspective, content, scientific, outcome) VALUES (?, ?, ?, ?, ?, ?)",
-                  (idea, emotion, perspective, content, scientific, outcome))
-        conn.commit()
-        blog_id = c.lastrowid
-        conn.close()
-        return redirect(url_for("view_blog", blog_id=blog_id))
-    return render_template("generate.html")
+@app.route("/all")
+def all_blogs():
+    conn = get_db_connection()
+    posts = conn.execute("SELECT * FROM blogs").fetchall()
+    conn.close()
+    return render_template("all.html", posts=posts)
 
 @app.route("/blog/<int:blog_id>")
-def view_blog(blog_id):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("UPDATE blogs SET views = views + 1 WHERE id = ?", (blog_id,))
-    c.execute("SELECT idea, content, scientific, outcome FROM blogs WHERE id = ?", (blog_id,))
-    blog = c.fetchone()
+def blog(blog_id):
+    conn = get_db_connection()
+    blog = conn.execute("SELECT * FROM blogs WHERE id = ?", (blog_id,)).fetchone()
+    conn.execute("UPDATE blogs SET views = views + 1 WHERE id = ?", (blog_id,))
     conn.commit()
     conn.close()
     return render_template("blog.html", blog=blog)

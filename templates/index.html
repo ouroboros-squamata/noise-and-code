@@ -1,15 +1,1 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Universal Blog Generator</title>
-</head>
-<body>
-    <h1>Top 10 Trending Blogs</h1>
-    <ul>
-        {% for blog in trending %}
-        <li><a href="{{ url_for('view_blog', blog_id=blog[0]) }}">{{ blog[1] }}</a> — {{ blog[3] }} views</li>
-        {% endfor %}
-    </ul>
-    <a href="/generate">Generate New Blog</a>
-</body>
-</html>
+<h1>Noise & Code Blog</h1><p>Trending posts go here.</p>
