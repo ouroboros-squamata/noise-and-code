@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 @app.route("/health", methods=["GET", "HEAD"])
 def health_check():
-    return "OK", 200
+    return "", 200
 
 def init_db():
     with sqlite3.connect("database.db") as conn:
