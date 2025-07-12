@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Noise & Code — Home{% endblock %}
+{% block content %}
+  <h1>Welcome to Noise & Code</h1>
+  <p><a href="/generate" class="btn btn-success">Generate a New Blog</a></p>
+  <p><a href="/all" class="btn btn-info">View All Blogs</a></p>
+  <p><a href="/recent" class="btn btn-secondary">View Recent Blogs</a></p>
+  {% if trending %}
+    <h3>Trending Now</h3>
+    <ul>
+      {% for post in trending %}
+        <li><a href="{{ url_for('blog', blog_id=post.id) }}">{{ post.title or post.idea }}</a> — Views: {{ post.views }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}
