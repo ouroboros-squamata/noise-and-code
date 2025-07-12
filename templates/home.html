@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Trending Blogs</h2>
+<ul>
+  {% for post in trending %}
+    <li><a href="/blog/{{ post['id'] }}">{{ post['title'] }}</a> ({{ post['views'] }} views)</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,3 +1,21 @@
-<!-- blog.html -->
-<!DOCTYPE html>
-<html><head><title>{{ blog['idea'] }}</title></head><body><h1>{{ blog['idea'] }}</h1><p>{{ blog['content'] }}</p></body></html>
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ blog['title'] }}</h2>
+<p><strong>Idea:</strong> {{ blog['idea'] }}</p>
+<p><strong>Emotion:</strong> {{ blog['emotion'] }}</p>
+<p><strong>Perspective:</strong> {{ blog['perspective'] }}</p>
+<p><strong>Tags:</strong> {{ blog['tags'] }}</p>
+<p>{{ blog['content']|safe }}</p>
+<p><strong>Views:</strong> {{ blog['views'] }}</p>
+<hr>
+<h3>Comments</h3>
+<form method="POST" action="/comment/{{ blog['id'] }}">
+  <input type="text" name="comment" placeholder="Leave a positive comment..." required>
+  <button type="submit">Submit</button>
+</form>
+<ul>
+  {% for comment in comments %}
+    <li>{{ comment['comment'] }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
