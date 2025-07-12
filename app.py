@@ -24,7 +24,7 @@ def submit():
     emotion = request.form["emotion"]
     perspective = request.form["perspective"]
 
-prompt = f"""Generate a scientific blog with:
+    prompt = f"""Generate a scientific blog with:
 - Idea: {idea}
 - Emotion: {emotion}
 - Perspective: {perspective}
