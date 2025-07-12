@@ -1,6 +1,15 @@
-<form action="/generate" method="post">
-  <input name="idea" placeholder="Your idea">
-  <input name="emotion" placeholder="Emotion or problem">
-  <label><input type="checkbox" name="promotion"> Feature this post (fee applies)</label>
-  <button type="submit">Generate</button>
-</form>
+
+<!DOCTYPE html>
+<html>
+<head><title>Generate Blog</title></head>
+<body style="background:#111; color:#fff; font-family:Helvetica, sans-serif; padding:2em;">
+  <h1>Create a New Blog</h1>
+  <form method="POST">
+    <label>Idea:</label><br><textarea name="idea" rows="3" cols="50"></textarea><br>
+    <label>Scientific Basis:</label><br><textarea name="scientific_basis" rows="2" cols="50"></textarea><br>
+    <label>Emotion Behind It:</label><br><input type="text" name="emotion_or_problem" size="50"><br>
+    <label>Positive Outcome:</label><br><input type="text" name="outcome" size="50"><br><br>
+    <input type="submit" value="Generate Blog">
+  </form>
+</body>
+</html>
