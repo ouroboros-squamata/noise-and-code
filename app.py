@@ -1,99 +1,125 @@
-from flask import Flask, render_template, request, redirect, jsonify
-import openai
-import sqlite3
+
 import os
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+import sqlite3
+from datetime import datetime
+import uuid
+import openai
+from dotenv import load_dotenv
 
-app = Flask(__name__)
-DATABASE = 'database.db'
-
+load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+app = Flask(__name__)
 
 def init_db():
-    with get_db_connection() as conn:
+    with sqlite3.connect("database.db") as conn:
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS blogs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                idea TEXT NOT NULL,
-                scientific_basis TEXT,
-                emotion TEXT,
-                positive_outcome TEXT,
-                tags TEXT,
-                content TEXT,
-                views INTEGER DEFAULT 0
-            );
+        CREATE TABLE IF NOT EXISTS blogs (
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            content TEXT,
+            views INTEGER DEFAULT 0,
+            created_at TEXT,
+            tags TEXT
+        )
         """)
         conn.commit()
 
-@app.route("/", methods=["GET"])
+@app.route("/")
 def home():
-    conn = get_db_connection()
-    trending = conn.execute("SELECT id, title FROM blogs ORDER BY views DESC LIMIT 3").fetchall()
-    return render_template("index.html", trending=trending)
+    with sqlite3.connect("database.db") as conn:
+        trending = conn.execute("SELECT id, title FROM blogs ORDER BY views DESC LIMIT 3").fetchall()
+    return render_template("index.html", blogs=trending)
 
 @app.route("/generate", methods=["GET", "POST"])
 def generate():
     if request.method == "POST":
         idea = request.form["idea"]
-        emotion = request.form["emotion"]
-        scientific_basis = request.form["scientific_basis"]
-        positive_outcome = request.form["positive_outcome"]
-        tags = request.form["tags"]
+        logic = request.form["scientific_basis"]
+        emotion = request.form["emotion_or_problem"]
+        outcome = request.form["outcome"]
+        tags = request.form.get("tags", "").strip().lower()
 
-        prompt = f"Write a positive blog post about: {idea}. Emotional angle: {emotion}. Scientific basis: {scientific_basis}. Outcome: {positive_outcome}."
+        prompt = f"""
+        Turn the following idea into a positive, belief-driven blog post with logic and scientific reasoning.
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You're a scientific, optimistic blog writer."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        content = response["choices"][0]["message"]["content"]
+        Idea: {idea}
+        Scientific Basis: {logic}
+        Emotion: {emotion}
+        Positive Outcome: {outcome}
 
-        conn = get_db_connection()
-        conn.execute("INSERT INTO blogs (title, idea, scientific_basis, emotion, positive_outcome, tags, content) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                     (idea, idea, scientific_basis, emotion, positive_outcome, tags, content))
-        conn.commit()
-        return redirect("/")
+        The blog should always find an optimistic interpretation and use science to support and refine the belief.
+        """
 
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=800
+            )
+            content = response['choices'][0]['message']['content']
+        except Exception as e:
+            content = f"<p>Error generating blog: {str(e)}</p>"
+
+        title = f"Belief Blog: {idea[:50]}"
+        post_id = str(uuid.uuid4())
+        with sqlite3.connect("database.db") as conn:
+            conn.execute("INSERT INTO blogs (id, title, content, created_at, tags) VALUES (?, ?, ?, ?, ?)",
+                         (post_id, title, content, datetime.now().isoformat(), tags))
+            conn.commit()
+        return redirect(url_for("view_blog", blog_id=post_id))
     return render_template("generate.html")
 
-@app.route("/autofill", methods=["POST"])
-def autofill():
-    data = request.json
-    idea = data.get("idea", "")
-    emotion = data.get("emotion", "")
+@app.route("/blog/<blog_id>")
+def view_blog(blog_id):
+    with sqlite3.connect("database.db") as conn:
+        blog = conn.execute("SELECT * FROM blogs WHERE id = ?", (blog_id,)).fetchone()
+        if blog:
+            conn.execute("UPDATE blogs SET views = views + 1 WHERE id = ?", (blog_id,))
+            conn.commit()
+            return render_template("blog.html", blog=blog)
+    return "Blog not found", 404
 
-    prompt = f"""Given the idea: '{idea}' and the emotion/problem: '{emotion}', generate:
-    1. A scientific explanation (1–2 sentences) behind how this idea is relevant.
-    2. A positive outcome (1–2 sentences) that can come from acting on this idea.
-    3. A comma-separated list of 3–5 relevant tags."""
+@app.route("/recent")
+def recent():
+    with sqlite3.connect("database.db") as conn:
+        blogs = conn.execute("SELECT id, title FROM blogs ORDER BY created_at DESC LIMIT 10").fetchall()
+    return render_template("recent.html", blogs=blogs)
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You're a helpful assistant that generates scientific reasoning and blog metadata."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    content = response["choices"][0]["message"]["content"]
+@app.route("/all")
+def all_blogs():
+    with sqlite3.connect("database.db") as conn:
+        blogs = conn.execute("SELECT id, title FROM blogs ORDER BY created_at DESC").fetchall()
+    return render_template("all.html", blogs=blogs)
 
-    lines = content.strip().split("\n")
-    return jsonify({
-        "scientific_basis": lines[0].strip(),
-        "positive_outcome": lines[1].strip(),
-        "tags": lines[2].strip().replace("Tags:", "").strip()
-    })
+@app.route("/tags/<tag>")
+def blogs_by_tag(tag):
+    with sqlite3.connect("database.db") as conn:
+        blogs = conn.execute("SELECT id, title FROM blogs WHERE tags LIKE ?", (f"%{tag}%",)).fetchall()
+    return render_template("tags.html", blogs=blogs, tag=tag)
 
-@app.route("/health", methods=["GET", "HEAD"])
-def health_check():
-    return "", 200
+@app.route("/api/blogs")
+def api_all_blogs():
+    with sqlite3.connect("database.db") as conn:
+        blogs = conn.execute("SELECT id, title, created_at, views FROM blogs").fetchall()
+    return jsonify([{"id": b[0], "title": b[1], "created_at": b[2], "views": b[3]} for b in blogs])
 
-if __name__ != "__main__":
+@app.route("/api/blogs/<blog_id>")
+def api_single_blog(blog_id):
+    with sqlite3.connect("database.db") as conn:
+        blog = conn.execute("SELECT * FROM blogs WHERE id = ?", (blog_id,)).fetchone()
+    if blog:
+        return jsonify({
+            "id": blog[0],
+            "title": blog[1],
+            "content": blog[2],
+            "views": blog[3],
+            "created_at": blog[4],
+            "tags": blog[5]
+        })
+    return jsonify({"error": "Not found"}), 404
+
+if __name__ == "__main__":
     init_db()
+    app.run(debug=True)
