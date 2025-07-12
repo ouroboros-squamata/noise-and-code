@@ -3,9 +3,9 @@
 {% block content %}
 <h1>All Blogs</h1>
 <ul>
-  {% for post in posts %}
+    {% for post in posts %}
     <li><a href="{{ url_for('blog', blog_id=post.id) }}">{{ post.title or post.idea }}</a> – Views: {{ post.views }}</li>
-  {% endfor %}
+    {% endfor %}
 </ul>
 
 <div class="generate-button">
@@ -17,6 +17,4 @@
         <button type="submit" class="btn btn-success">Generate Blog</button>
     </form>
 </div>
-
 {% endblock %}
-

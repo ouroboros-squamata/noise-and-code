@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ blog.title or blog.idea }} – Noise & Code{% endblock %}
+{% block title %}{{ post.title or post.idea }} – Noise & Code{% endblock %}
 {% block content %}
-<h1>{{ blog.title or blog.idea }}</h1>
-<p><strong>Emotion:</strong> {{ blog.emotion }}</p>
-<p><strong>Perspective:</strong> {{ blog.perspective }}</p>
-<p><strong>Views:</strong> {{ blog.views }}</p>
-<p><strong>Tags:</strong> {{ blog.tags }}</p>
-<article>{{ blog.content|safe }}</article>
-<a href="{{ url_for('home') }}">Back to Home</a>
+<h1>{{ post.title or post.idea }}</h1>
+<p><strong>Scientific Basis:</strong> {{ post.basis }}</p>
+<p><strong>Positive Outcome:</strong> {{ post.outcome }}</p>
+<p>{{ post.blog }}</p>
+<p><em>Views: {{ post.views }}</em></p>
+<a href="/" class="btn btn-primary">← Back to Home</a>
 {% endblock %}

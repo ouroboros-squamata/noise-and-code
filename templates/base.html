@@ -1,20 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
+<head>
+    <meta charset="UTF-8">
     <title>{% block title %}Noise & Code{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    {% if meta_description %}
-    <meta name="description" content="{{ meta_description }}">
-    {% endif %}
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  </head>
-  <body>
-    <nav>
-      <a href="{{ url_for('home') }}">Home</a> |
-      <a href="{{ url_for('recent') }}">Recent</a> |
-      <a href="{{ url_for('all_blogs') }}">All Blogs</a>
-    </nav>
-    <main>{% block content %}{% endblock %}</main>
-  </body>
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
 </html>
