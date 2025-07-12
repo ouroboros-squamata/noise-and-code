@@ -1,106 +1,76 @@
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect
 import sqlite3
 import openai
 import os
-import json
 
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
-DATABASE = 'database.db'
-
-@app.route('/health')
-def health():
-    return "OK", 200
 
 def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS blogs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            idea TEXT,
-            emotion TEXT,
-            perspective TEXT,
-            title TEXT,
-            content TEXT,
-            niches TEXT,
-            views INTEGER DEFAULT 0
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-@app.route('/')
+@app.route("/", methods=["GET"])
 def home():
     conn = get_db_connection()
     posts = conn.execute("SELECT * FROM blogs ORDER BY views DESC LIMIT 10").fetchall()
     conn.close()
-    return render_template('index.html', posts=posts)
+    return render_template("index.html", trending=posts)
 
-@app.route('/submit', methods=['POST'])
+@app.route("/submit", methods=["POST"])
 def submit():
-    idea = request.form['idea']
-    emotion = request.form['emotion']
-    perspective = request.form['perspective']
+    idea = request.form["idea"]
+    emotion = request.form["emotion"]
+    perspective = request.form["perspective"]
 
-    prompt = f"""
-Given this blog idea:
-Idea: {idea}
-Emotion: {emotion}
-Perspective: {perspective}
-
-1. Write a full positive blog.
-2. Suggest up to 3 relevant topic niches (lowercase, URL-safe) from domains like AI, environment, wellness, finance, space, technology, education, psychology, etc.
-Respond in JSON:
-{{
-  "title": "...",
-  "content": "...",
-  "niches": ["niche1", "niche2"]
-}}
+    prompt = f"""Generate a scientific blog with:
+- Idea: {idea}
+- Emotion: {emotion}
+- Perspective: {perspective}
 """
 
-    response = openai.chat.completions.create(
-        model="gpt-4o",
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}]
     )
 
-    blog = response.choices[0].message.content.strip()
-    parsed = json.loads(blog)
-    title = parsed["title"]
-    content = parsed["content"]
-    niches = ",".join(parsed["niches"])
+    content = response.choices[0].message.content
 
     conn = get_db_connection()
     conn.execute(
-        'INSERT INTO blogs (idea, emotion, perspective, title, content, niches) VALUES (?, ?, ?, ?, ?, ?)',
-        (idea, emotion, perspective, title, content, niches)
+        "INSERT INTO blogs (idea, emotion, perspective, content, views) VALUES (?, ?, ?, ?, 0)",
+        (idea, emotion, perspective, content)
     )
     conn.commit()
     conn.close()
-    return redirect(url_for('home'))
 
-@app.route('/blog/<int:post_id>')
-def blog(post_id):
+    return redirect("/")
+
+@app.route("/recent")
+def recent():
     conn = get_db_connection()
-    conn.execute("UPDATE blogs SET views = views + 1 WHERE id = ?", (post_id,))
-    blog = conn.execute("SELECT * FROM blogs WHERE id = ?", (post_id,)).fetchone()
+    posts = conn.execute("SELECT * FROM blogs ORDER BY id DESC").fetchall()
+    conn.close()
+    return render_template("recent.html", posts=posts)
+
+@app.route("/all")
+def all_blogs():
+    conn = get_db_connection()
+    posts = conn.execute("SELECT * FROM blogs").fetchall()
+    conn.close()
+    return render_template("all.html", posts=posts)
+
+@app.route("/blog/<int:blog_id>")
+def blog(blog_id):
+    conn = get_db_connection()
+    blog = conn.execute("SELECT * FROM blogs WHERE id = ?", (blog_id,)).fetchone()
+    conn.execute("UPDATE blogs SET views = views + 1 WHERE id = ?", (blog_id,))
     conn.commit()
     conn.close()
-    return render_template('blog.html', blog=blog)
+    return render_template("blog.html", blog=blog)
 
-@app.route('/niche/<name>')
-def niche(name):
-    conn = get_db_connection()
-    blogs = conn.execute('SELECT * FROM blogs WHERE niches LIKE ?', (f'%{name}%',)).fetchall()
-    conn.close()
-    return render_template('niche.html', blogs=blogs, name=name)
-
-if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+@app.route("/health")
+def health():
+    return "OK", 200

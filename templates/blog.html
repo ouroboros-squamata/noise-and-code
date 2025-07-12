@@ -1,3 +1,11 @@
-<!-- blog.html -->
-<!DOCTYPE html>
-<html><head><title>{{ blog['idea'] }}</title></head><body><h1>{{ blog['idea'] }}</h1><p>{{ blog['content'] }}</p></body></html>
+{% extends "base.html" %}
+{% block title %}{{ blog.title or blog.idea }} – Noise & Code{% endblock %}
+{% block content %}
+<h1>{{ blog.title or blog.idea }}</h1>
+<p><strong>Emotion:</strong> {{ blog.emotion }}</p>
+<p><strong>Perspective:</strong> {{ blog.perspective }}</p>
+<p><strong>Views:</strong> {{ blog.views }}</p>
+<p><strong>Tags:</strong> {{ blog.tags }}</p>
+<article>{{ blog.content|safe }}</article>
+<a href="{{ url_for('home') }}">Back to Home</a>
+{% endblock %}

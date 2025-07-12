@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% block title %}Noise & Code{% endblock %}
 {% block content %}
-<h2>Top Trending Blogs</h2>
+<h1>Trending Blogs</h1>
 <ul>
-    {% for post in posts %}
-    <li><a href="/blog/{{ post.id }}">{{ post.idea }} — {{ post.perspective }}</a> ({{ post.views }} views)</li>
-    {% endfor %}
+  {% for post in trending %}
+    <li><a href="{{ url_for('blog', blog_id=post.id) }}">{{ post.title or post.idea }}</a> – Views: {{ post.views }}</li>
+  {% endfor %}
 </ul>
 {% endblock %}
