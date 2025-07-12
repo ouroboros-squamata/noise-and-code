@@ -8,3 +8,13 @@
   {% endfor %}
 </ul>
 {% endblock %}
+
+<div class="generate-button">
+    <a href="/" class="btn btn-primary">← Back to Home</a>
+    <form action="/submit" method="post" style="margin-top: 10px;">
+        <input type="hidden" name="idea" value="test idea">
+        <input type="hidden" name="emotion" value="test emotion">
+        <input type="hidden" name="perspective" value="scientific">
+        <button type="submit" class="btn btn-success">Generate Blog</button>
+    </form>
+</div>
