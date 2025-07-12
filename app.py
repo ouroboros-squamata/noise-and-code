@@ -30,19 +30,31 @@ def submit():
     perspective = request.form["perspective"]
 
     prompt = f"""Generate a scientific blog with:
-- Idea: {idea}
-- Emotion: {emotion}
-- Perspective: {perspective}
-"""
+    - Idea: {idea}
+    - Emotion: {emotion}
+    - Perspective: {perspective}
+    """
 
-from openai import OpenAI
+    from openai import OpenAI
+    client = OpenAI()
 
-client = OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
 
-response = client.chat.completions.create(
-    model="gpt-4",
-    messages=[{"role": "user", "content": prompt}]
-)
+    content = response.choices[0].message.content
+
+    conn = get_db_connection()
+    conn.execute(
+        "INSERT INTO blogs (idea, emotion, perspective, content, views) VALUES (?, ?, ?, ?, 0)",
+        (idea, emotion, perspective, content)
+    )
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
 
     content = response.choices[0].message.content
 
