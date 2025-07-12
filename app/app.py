@@ -16,6 +16,10 @@ def is_sales_pitch(text):
     sales_keywords = ["buy", "offer", "limited", "discount", "deal", "enroll", "get your", "subscribe"]
     return any(kw in text.lower() for kw in sales_keywords)
 
+@app.route("/health")
+def health_check():
+    return "OK", 200
+
 @app.route("/generate", methods=["GET", "POST"])
 def generate():
     if request.method == "POST":
