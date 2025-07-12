@@ -1,9 +1,15 @@
-
 <!DOCTYPE html>
 <html>
-<head><title>{{ blog[1] }}</title></head>
-<body style="background:#111; color:#fff; font-family:Helvetica, sans-serif; padding:2em;">
-  {{ blog[2]|safe }}
-  <p><a href="/" style="color:#0af;">Back to Home</a></p>
+<head>
+    <title>Blog</title>
+</head>
+<body>
+    <h1>{{ blog[0] }}</h1>
+    <p>{{ blog[1] }}</p>
+    <h3>Scientific Basis:</h3>
+    <p>{{ blog[2] }}</p>
+    <h3>Positive Outcome:</h3>
+    <p>{{ blog[3] }}</p>
+    <a href="/">Back to Home</a>
 </body>
 </html>
