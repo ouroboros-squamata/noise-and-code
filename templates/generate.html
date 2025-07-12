@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Blog</title>
+  <script>
+    async function autofillFields() {
+      const idea = document.getElementById("idea").value;
+      const emotion = document.getElementById("emotion").value;
+      const response = await fetch("/autofill", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ idea, emotion })
+      });
+      const data = await response.json();
+      document.getElementById("scientific_basis").value = data.scientific_basis;
+      document.getElementById("positive_outcome").value = data.positive_outcome;
+      document.getElementById("tags").value = data.tags;
+    }
+  </script>
+</head>
+<body>
+  <h2>Generate a Blog Post</h2>
+  <form method="POST">
+    <label>Idea:</label><br>
+    <input type="text" name="idea" id="idea"><br>
+    <label>Emotion or Problem:</label><br>
+    <input type="text" name="emotion" id="emotion"><br>
+    <button type="button" onclick="autofillFields()">🧠 Auto-fill</button><br><br>
+    <label>Scientific Basis:</label><br>
+    <textarea name="scientific_basis" id="scientific_basis"></textarea><br>
+    <label>Positive Outcome:</label><br>
+    <textarea name="positive_outcome" id="positive_outcome"></textarea><br>
+    <label>Tags:</label><br>
+    <input type="text" name="tags" id="tags"><br><br>
+    <button type="submit">Generate Blog</button>
+  </form>
+</body>
+</html>
