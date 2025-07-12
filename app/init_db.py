@@ -1,4 +1,3 @@
-from app import init_db
+def init_db(): pass
 
-if __name__ == "__main__":
-    init_db()
+if __name__ == '__main__': init_db()
