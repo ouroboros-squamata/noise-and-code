@@ -7,7 +7,6 @@
     <li><a href="{{ url_for('blog', blog_id=post.id) }}">{{ post.title or post.idea }}</a> – Views: {{ post.views }}</li>
   {% endfor %}
 </ul>
-{% endblock %}
 
 <div class="generate-button">
     <a href="/" class="btn btn-primary">← Back to Home</a>
@@ -18,3 +17,6 @@
         <button type="submit" class="btn btn-success">Generate Blog</button>
     </form>
 </div>
+
+{% endblock %}
+
