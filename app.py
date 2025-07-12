@@ -1,76 +1,75 @@
-
-from flask import Flask, render_template, request, redirect
+from flask import Flask, request, render_template, redirect
+from openai import OpenAI
+from datetime import datetime
 import sqlite3
-import openai
 import os
 
 app = Flask(__name__)
-openai.api_key = os.getenv("OPENAI_API_KEY")
+DATABASE = 'blog.db'
 
-def get_db_connection():
-    conn = sqlite3.connect('database.db')
+def get_db():
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
-
-@app.route("/", methods=["GET"])
-def home():
-    conn = get_db_connection()
-    posts = conn.execute("SELECT * FROM blogs ORDER BY views DESC LIMIT 10").fetchall()
-    conn.close()
-    return render_template("index.html", trending=posts)
-
-@app.route("/submit", methods=["POST"])
-def submit():
-    idea = request.form["idea"]
-    emotion = request.form["emotion"]
-    perspective = request.form["perspective"]
-
-    prompt = f"""Generate a scientific blog with:
-- Idea: {idea}
-- Emotion: {emotion}
-- Perspective: {perspective}
-"""
-
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    content = response.choices[0].message.content
-
-    conn = get_db_connection()
-    conn.execute(
-        "INSERT INTO blogs (idea, emotion, perspective, content, views) VALUES (?, ?, ?, ?, 0)",
-        (idea, emotion, perspective, content)
-    )
-    conn.commit()
-    conn.close()
-
-    return redirect("/")
-
-@app.route("/recent")
-def recent():
-    conn = get_db_connection()
-    posts = conn.execute("SELECT * FROM blogs ORDER BY id DESC").fetchall()
-    conn.close()
-    return render_template("recent.html", posts=posts)
-
-@app.route("/all")
-def all_blogs():
-    conn = get_db_connection()
-    posts = conn.execute("SELECT * FROM blogs").fetchall()
-    conn.close()
-    return render_template("all.html", posts=posts)
-
-@app.route("/blog/<int:blog_id>")
-def blog(blog_id):
-    conn = get_db_connection()
-    blog = conn.execute("SELECT * FROM blogs WHERE id = ?", (blog_id,)).fetchone()
-    conn.execute("UPDATE blogs SET views = views + 1 WHERE id = ?", (blog_id,))
-    conn.commit()
-    conn.close()
-    return render_template("blog.html", blog=blog)
 
 @app.route("/health")
 def health():
     return "OK", 200
+
+@app.route("/")
+def home():
+    db = get_db()
+    posts = db.execute("SELECT * FROM posts ORDER BY views DESC LIMIT 10").fetchall()
+    return render_template("index.html", trending=posts)
+
+@app.route("/all")
+def all_blogs():
+    db = get_db()
+    posts = db.execute("SELECT * FROM posts ORDER BY created_at DESC").fetchall()
+    return render_template("all.html", posts=posts)
+
+@app.route("/recent")
+def recent_blogs():
+    db = get_db()
+    posts = db.execute("SELECT * FROM posts ORDER BY created_at DESC LIMIT 10").fetchall()
+    return render_template("recent.html", posts=posts)
+
+@app.route("/submit", methods=["POST"])
+def submit():
+    idea = request.form.get("idea")
+    emotion = request.form.get("emotion")
+    perspective = request.form.get("perspective")
+
+    if not all([idea, emotion, perspective]):
+        return "Missing required fields", 400
+
+    prompt = (
+        f"Write a short, inspiring blog post based on the following idea:\n"
+        f"Idea: {idea}\n"
+        f"Emotion or Problem: {emotion}\n"
+        f"Perspective or Voice: {perspective}\n\n"
+        f"Include a clear scientific basis, a hopeful tone, and assign 3 relevant tags."
+    )
+
+    try:
+        client = OpenAI()
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        blog = response.choices[0].message.content
+
+        db = get_db()
+        db.execute(
+            "INSERT INTO posts (title, content, created_at) VALUES (?, ?, ?)",
+            (idea, blog, datetime.utcnow().isoformat())
+        )
+        db.commit()
+        return redirect("/all")
+
+    except Exception as e:
+        print("OpenAI error:", e)
+        return f"Failed to generate blog: {e}", 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
