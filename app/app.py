@@ -5,6 +5,14 @@ import os
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+@app.route("/health")
+def health_check():
+    return "OK", 200
+
+@app.route("/", methods=["GET", "HEAD"])
+def home():
+    return render_template("generate.html")
+
 def generate_field(prompt):
     response = openai.ChatCompletion.create(
         model="gpt-4",
