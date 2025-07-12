@@ -30,7 +30,7 @@ prompt = f"""Generate a scientific blog with:
 - Perspective: {perspective}
 """
 
-    	response = openai.ChatCompletion.create(
+    response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}]
     )
