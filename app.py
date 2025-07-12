@@ -24,17 +24,11 @@ def submit():
     emotion = request.form["emotion"]
     perspective = request.form["perspective"]
 
-    prompt = (
-        f"Generate a scientific blog with:
-"
-        f"Idea: {idea}
-"
-        f"Emotion: {emotion}
-"
-        f"Perspective: {perspective}
-"
-        f"Include a scientific basis and a positive outcome."
-    )
+prompt = f"""Generate a scientific blog with:
+- Idea: {idea}
+- Emotion: {emotion}
+- Perspective: {perspective}
+"""
 
     response = openai.ChatCompletion.create(
         model="gpt-4",
