@@ -2,27 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Noise & Code{% endblock %}</title>
+    <title>Noise & Code</title>
     <link rel="stylesheet" href="/static/style.css">
-    <meta name="description" content="{% block description %}Explore insightful blogs generated from raw ideas{% endblock %}">
-    <meta name="keywords" content="Noise and Code, blog, AI generated content, positive blogs, scientific blogs">
-    <meta name="author" content="Noise & Code Team">
 </head>
 <body>
     <header>
         <h1><a href="/">Noise & Code</a></h1>
         <nav>
-            <a href="/">Trending</a> |
             <a href="/recent">Recent</a> |
-            <a href="/all">All Blogs</a>
+            <a href="/all">All Blogs</a> |
+            <a href="/generate">Generate New Blog</a>
         </nav>
     </header>
     <main>
         {% block content %}{% endblock %}
     </main>
-    <footer>
-        <p>Built with ❤️ by Noise & Code</p>
-    </footer>
 </body>
 </html>

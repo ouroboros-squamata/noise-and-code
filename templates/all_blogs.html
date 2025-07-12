@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Most Recent Blogs</h2>
+<h2>All Blogs</h2>
 <ul>
     {% for post in posts %}
-    <li><a href="/blog/{{ post.id }}">{{ post.idea }}</a> ({{ post.created_at }})</li>
+    <li><a href="/blog/{{ post.id }}">{{ post.idea }} - {{ post.niche }}</a></li>
     {% endfor %}
 </ul>
 {% endblock %}

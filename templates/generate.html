@@ -1,13 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Generate a Blog</h2>
-<form action="/submit" method="POST">
-  <label>Idea:</label><br>
-  <input type="text" name="idea" required><br>
-  <label>Emotion:</label><br>
-  <input type="text" name="emotion" required><br>
-  <label>Perspective:</label><br>
-  <input type="text" name="perspective" required><br>
-  <button type="submit">Generate</button>
+<h2>Generate a New Blog</h2>
+<form method="post" action="/submit">
+    <label>Idea:<br><input type="text" name="idea" required></label><br><br>
+    <label>Emotion:<br><input type="text" name="emotion" required></label><br><br>
+    <label>Perspective:<br><input type="text" name="perspective" value="personal" required></label><br><br>
+    <button type="submit">Generate Blog</button>
 </form>
 {% endblock %}

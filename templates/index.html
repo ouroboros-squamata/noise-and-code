@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Noise & Code</h1>
-<p>Welcome to the blog generator. <a href="/generate">Generate a new blog</a></p>
+<h2>Top Trending Blogs</h2>
+<ul>
+    {% for post in posts %}
+    <li><a href="/blog/{{ post.id }}">{{ post.idea }} — {{ post.perspective }}</a> ({{ post.views }} views)</li>
+    {% endfor %}
+</ul>
 {% endblock %}
