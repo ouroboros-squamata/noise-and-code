@@ -1,3 +1,33 @@
+import os
+import sqlite3
+from flask import Flask, request, render_template, redirect
+from datetime import datetime
+
+app = Flask(__name__)
+DB_NAME = "posts.db"
+
+def init_db():
+    if not os.path.exists(DB_NAME):
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS posts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                idea TEXT NOT NULL,
+                emotion TEXT NOT NULL,
+                perspective TEXT NOT NULL,
+                scientific_basis TEXT,
+                positive_outcome TEXT,
+                tags TEXT,
+                views INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        print("✅ Database initialized on startup")
+
+init_db()  # run this when app starts
 
 from flask import Flask, render_template, request, redirect, g
 import sqlite3
