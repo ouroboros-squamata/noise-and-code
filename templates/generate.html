@@ -3,26 +3,36 @@
   <head>
     <title>Generate Blog</title>
     <script>
-      async function autoGenerate() {
-        document.getElementById("generate-btn").innerText = "Generating...";
-        const form = new FormData(document.getElementById("auto-form"));
-        const response = await fetch("/autogen", { method: "POST", body: form });
+      async function generateBlog() {
+        const idea = document.getElementById("idea").value;
+        const emotion = document.getElementById("emotion").value;
+        const perspective = document.getElementById("perspective").value;
+
+        const response = await fetch("/autogen", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idea, emotion, perspective })
+        });
+
         const data = await response.json();
-        document.getElementById("title").value = data.title;
-        document.getElementById("content").value = data.content;
-        document.getElementById("generate-btn").innerText = "Generate Blog";
+        if (data.title && data.content) {
+          document.getElementById("title").value = data.title;
+          document.getElementById("content").value = data.content;
+        } else {
+          alert("Error generating blog: " + (data.error || "Unknown error"));
+        }
       }
     </script>
   </head>
   <body>
     <h1>Generate a New Blog</h1>
-    <form method="POST" id="auto-form">
-      <textarea name="title" id="title" placeholder="Blog Title"></textarea><br>
-      <textarea name="content" id="content" placeholder="Generated content here..."></textarea><br>
-      <input type="text" name="idea" placeholder="Idea (e.g., AI for good)"><br>
-      <input type="text" name="emotion" placeholder="Emotion/problem (e.g., hope, fear)"><br>
-      <input type="text" name="perspective" placeholder="Perspective (e.g., personal)"><br>
-      <button type="button" id="generate-btn" onclick="autoGenerate()">Auto Generate</button>
+    <form method="post">
+      <input type="text" id="title" name="title" placeholder="Blog Title" required><br>
+      <textarea id="content" name="content" placeholder="Generated content here..." required></textarea><br>
+      <input type="text" id="idea" name="idea" placeholder="Idea (e.g., AI for good)"><br>
+      <input type="text" id="emotion" name="emotion" placeholder="Emotion/problem (e.g., hope, burnout)"><br>
+      <input type="text" id="perspective" name="perspective" placeholder="Perspective (e.g., personal)"><br>
+      <button type="button" onclick="generateBlog()">Auto Generate</button>
       <button type="submit">Submit Blog</button>
     </form>
   </body>

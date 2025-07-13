@@ -6,7 +6,7 @@ import openai
 app = Flask(__name__)
 DATABASE = 'posts.db'
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 def init_db():
     with sqlite3.connect(DATABASE) as conn:
@@ -20,7 +20,6 @@ def init_db():
                             views INTEGER DEFAULT 0
                         )""")
         conn.commit()
-    print("✅ Database initialized successfully.")
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -66,17 +65,33 @@ def generate_blog():
 
 @app.route("/autogen", methods=["POST"])
 def autogen():
-    idea = request.form.get("idea", "")
-    emotion = request.form.get("emotion", "")
-    perspective = request.form.get("perspective", "")
-    prompt = f"Write a blog post from a {perspective} perspective. Idea: {idea}. Emotion/problem: {emotion}."
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    content = response['choices'][0]['message']['content'].strip()
-    title = content.split("\n")[0].strip("# ").strip()
-    return jsonify({"title": title, "content": content})
+    data = request.get_json()
+    idea = data.get("idea", "")
+    emotion = data.get("emotion", "")
+    perspective = data.get("perspective", "")
+
+    prompt = f"""Generate a blog title and blog content.
+Idea: {idea}
+Emotion/problem: {emotion}
+Perspective: {perspective}
+
+Return in this format:
+Title: <title>
+Content: <content>"""
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        reply = response['choices'][0]['message']['content']
+        lines = reply.strip().split("Content:")
+        title = lines[0].replace("Title:", "").strip()
+        content = lines[1].strip() if len(lines) > 1 else "No content generated."
+
+        return jsonify({"title": title, "content": content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/health")
 def health():
