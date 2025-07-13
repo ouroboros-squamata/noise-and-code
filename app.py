@@ -1,14 +1,14 @@
-from flask import Flask, request, render_template, redirect
-from openai import OpenAI
-from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
+import openai
+from datetime import datetime
 import os
 
 app = Flask(__name__)
-DATABASE = 'blog.db'
+openai.api_key = os.getenv("OPENAI_API_KEY", "sk-...")
 
-def get_db():
-    conn = sqlite3.connect(DATABASE)
+def get_db_connection():
+    conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -18,58 +18,48 @@ def health():
 
 @app.route("/")
 def home():
-    db = get_db()
+    db = get_db_connection()
     posts = db.execute("SELECT * FROM posts ORDER BY views DESC LIMIT 10").fetchall()
-    return render_template("index.html", trending=posts)
+    db.close()
+    return render_template("home.html", posts=posts)
 
 @app.route("/all")
 def all_blogs():
-    db = get_db()
+    db = get_db_connection()
     posts = db.execute("SELECT * FROM posts ORDER BY created_at DESC").fetchall()
+    db.close()
     return render_template("all.html", posts=posts)
 
 @app.route("/recent")
-def recent_blogs():
-    db = get_db()
-    posts = db.execute("SELECT * FROM posts ORDER BY created_at DESC LIMIT 10").fetchall()
+def recent():
+    db = get_db_connection()
+    posts = db.execute("SELECT * FROM posts ORDER BY created_at DESC LIMIT 5").fetchall()
+    db.close()
     return render_template("recent.html", posts=posts)
 
-@app.route("/submit", methods=["POST"])
-def submit():
-    idea = request.form.get("idea")
-    emotion = request.form.get("emotion")
-    perspective = request.form.get("perspective")
-
-    if not all([idea, emotion, perspective]):
-        return "Missing required fields", 400
-
-    prompt = (
-        f"Write a short, inspiring blog post based on the following idea:\n"
-        f"Idea: {idea}\n"
-        f"Emotion or Problem: {emotion}\n"
-        f"Perspective or Voice: {perspective}\n\n"
-        f"Include a clear scientific basis, a hopeful tone, and assign 3 relevant tags."
-    )
-
-    try:
-        client = OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        blog = response.choices[0].message.content
-
-        db = get_db()
-        db.execute(
-            "INSERT INTO posts (title, content, created_at) VALUES (?, ?, ?)",
-            (idea, blog, datetime.utcnow().isoformat())
-        )
+@app.route("/generate", methods=["GET", "POST"])
+def generate():
+    if request.method == "POST":
+        idea = request.form["idea"]
+        emotion = request.form["emotion"]
+        perspective = request.form["perspective"]
+        content = generate_blog(idea, emotion, perspective)
+        db = get_db_connection()
+        db.execute("INSERT INTO posts (idea, emotion, perspective, content, created_at, views)
+                    VALUES (?, ?, ?, ?, ?, ?)",
+                   (idea, emotion, perspective, content, datetime.utcnow(), 0))
         db.commit()
-        return redirect("/all")
+        db.close()
+        return redirect(url_for("home"))
+    return render_template("generate.html")
 
-    except Exception as e:
-        print("OpenAI error:", e)
-        return f"Failed to generate blog: {e}", 500
+def generate_blog(idea, emotion, perspective):
+    prompt = f"Write a positive, belief-based blog based on the idea: '{idea}', emotion: '{emotion}', and perspective: '{perspective}'."
+    response = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content.strip()
 
 if __name__ == "__main__":
     app.run(debug=True)
