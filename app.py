@@ -6,26 +6,38 @@ from datetime import datetime
 app = Flask(__name__)
 DB_NAME = "posts.db"
 
+import sqlite3
+import os
+
+DB_NAME = "posts.db"
+
 def init_db():
-    if not os.path.exists(DB_NAME):
+    try:
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS posts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                idea TEXT NOT NULL,
-                emotion TEXT NOT NULL,
-                perspective TEXT NOT NULL,
-                scientific_basis TEXT,
-                positive_outcome TEXT,
-                tags TEXT,
-                views INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
+        # Check if posts table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='posts';")
+        if not cursor.fetchone():
+            cursor.execute('''
+                CREATE TABLE posts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    idea TEXT NOT NULL,
+                    emotion TEXT NOT NULL,
+                    perspective TEXT NOT NULL,
+                    scientific_basis TEXT,
+                    positive_outcome TEXT,
+                    tags TEXT,
+                    views INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            print("✅ 'posts' table created.")
+        else:
+            print("ℹ️ 'posts' table already exists.")
         conn.commit()
         conn.close()
-        print("✅ Database initialized on startup")
+    except Exception as e:
+        print(f"❌ Failed to initialize DB: {e}")
 
 init_db()  # run this when app starts
 
