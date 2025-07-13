@@ -1,10 +1,12 @@
-
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 import os
+import openai
 
 app = Flask(__name__)
 DATABASE = 'posts.db'
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def init_db():
     with sqlite3.connect(DATABASE) as conn:
@@ -61,6 +63,20 @@ def generate_blog():
         db.close()
         return redirect(url_for("all_blogs"))
     return render_template("generate.html")
+
+@app.route("/autogen", methods=["POST"])
+def autogen():
+    idea = request.form.get("idea", "")
+    emotion = request.form.get("emotion", "")
+    perspective = request.form.get("perspective", "")
+    prompt = f"Write a blog post from a {perspective} perspective. Idea: {idea}. Emotion/problem: {emotion}."
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    content = response['choices'][0]['message']['content'].strip()
+    title = content.split("\n")[0].strip("# ").strip()
+    return jsonify({"title": title, "content": content})
 
 @app.route("/health")
 def health():

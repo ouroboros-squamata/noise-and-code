@@ -1,15 +1,29 @@
 <!doctype html>
 <html>
-  <head><title>Generate a Blog</title></head>
+  <head>
+    <title>Generate Blog</title>
+    <script>
+      async function autoGenerate() {
+        document.getElementById("generate-btn").innerText = "Generating...";
+        const form = new FormData(document.getElementById("auto-form"));
+        const response = await fetch("/autogen", { method: "POST", body: form });
+        const data = await response.json();
+        document.getElementById("title").value = data.title;
+        document.getElementById("content").value = data.content;
+        document.getElementById("generate-btn").innerText = "Generate Blog";
+      }
+    </script>
+  </head>
   <body>
     <h1>Generate a New Blog</h1>
-    <form method="POST" action="/generate">
-      <input type="text" name="title" placeholder="Blog Title" required><br>
-      <textarea name="content" placeholder="Generated content here..." required></textarea><br>
-      <input type="text" name="idea" placeholder="Idea (e.g., AI for good)" required><br>
-      <input type="text" name="emotion" placeholder="Emotion/problem (e.g., hope)" required><br>
-      <input type="text" name="perspective" placeholder="Perspective (e.g., personal)" required><br>
-      <button type="submit">Generate Blog</button>
+    <form method="POST" id="auto-form">
+      <textarea name="title" id="title" placeholder="Blog Title"></textarea><br>
+      <textarea name="content" id="content" placeholder="Generated content here..."></textarea><br>
+      <input type="text" name="idea" placeholder="Idea (e.g., AI for good)"><br>
+      <input type="text" name="emotion" placeholder="Emotion/problem (e.g., hope, fear)"><br>
+      <input type="text" name="perspective" placeholder="Perspective (e.g., personal)"><br>
+      <button type="button" id="generate-btn" onclick="autoGenerate()">Auto Generate</button>
+      <button type="submit">Submit Blog</button>
     </form>
   </body>
 </html>
