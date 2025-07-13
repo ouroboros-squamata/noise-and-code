@@ -1,1 +1,44 @@
-<h1>Noise & Code - Home</h1><form method='post' action='/generate'><input name='idea'><input name='emotion'><input name='perspective'><button type='submit'>Generate</button></form>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noise & Code - Home</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { font-size: 2.5em; }
+        form { margin-bottom: 2em; }
+        input, button { margin-right: 10px; padding: 10px; }
+        .nav-buttons { margin-top: 20px; }
+        .nav-buttons a { 
+            display: inline-block; 
+            margin: 5px 0; 
+            padding: 12px 20px; 
+            color: white; 
+            text-decoration: none; 
+            font-weight: bold;
+            border-radius: 5px; 
+        }
+        .green { background-color: #28a745; }
+        .blue { background-color: #17a2b8; }
+        .gray { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>Noise & Code - Home</h1>
+
+    <form action="/generate" method="post">
+        <input type="text" name="idea" placeholder="Enter your idea" required>
+        <input type="text" name="emotion" placeholder="What's the emotion or problem?" required>
+        <input type="text" name="perspective" placeholder="Perspective (e.g. scientific, personal)" required>
+        <button type="submit">Generate</button>
+    </form>
+
+    <div class="nav-buttons">
+        <a href="/generate" class="green">Generate a New Blog</a><br>
+        <a href="/all" class="blue">View All Blogs</a><br>
+        <a href="/recent" class="gray">View Recent Blogs</a>
+    </div>
+</body>
+</html>
