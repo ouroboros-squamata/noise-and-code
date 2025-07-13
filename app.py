@@ -11,33 +11,29 @@ import os
 
 DB_NAME = "posts.db"
 
-def init_db():
+ddef init_db():
     try:
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
-        # Check if posts table exists
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='posts';")
-        if not cursor.fetchone():
-            cursor.execute('''
-                CREATE TABLE posts (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    idea TEXT NOT NULL,
-                    emotion TEXT NOT NULL,
-                    perspective TEXT NOT NULL,
-                    scientific_basis TEXT,
-                    positive_outcome TEXT,
-                    tags TEXT,
-                    views INTEGER DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            print("✅ 'posts' table created.")
-        else:
-            print("ℹ️ 'posts' table already exists.")
+        # Explicitly create table if it does not exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS posts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                idea TEXT NOT NULL,
+                emotion TEXT NOT NULL,
+                perspective TEXT NOT NULL,
+                scientific_basis TEXT,
+                positive_outcome TEXT,
+                tags TEXT,
+                views INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        print("✅ posts table ensured.")
         conn.commit()
         conn.close()
     except Exception as e:
-        print(f"❌ Failed to initialize DB: {e}")
+        print(f"❌ DB init error: {e}")
 
 init_db()  # run this when app starts
 
