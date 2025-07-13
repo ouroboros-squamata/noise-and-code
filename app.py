@@ -1,110 +1,71 @@
-import os
+
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
-from flask import Flask, request, render_template, redirect
-from datetime import datetime
+import os
 
 app = Flask(__name__)
-DB_NAME = "posts.db"
+DATABASE = 'posts.db'
 
-import sqlite3
-import os
-
-DB_NAME = "posts.db"
-
-ddef init_db():
-    try:
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        # Explicitly create table if it does not exist
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS posts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                idea TEXT NOT NULL,
-                emotion TEXT NOT NULL,
-                perspective TEXT NOT NULL,
-                scientific_basis TEXT,
-                positive_outcome TEXT,
-                tags TEXT,
-                views INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        print("✅ posts table ensured.")
+def init_db():
+    with sqlite3.connect(DATABASE) as conn:
+        conn.execute("""CREATE TABLE IF NOT EXISTS posts (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            title TEXT NOT NULL,
+                            content TEXT NOT NULL,
+                            idea TEXT,
+                            emotion TEXT,
+                            perspective TEXT,
+                            views INTEGER DEFAULT 0
+                        )""")
         conn.commit()
-        conn.close()
-    except Exception as e:
-        print(f"❌ DB init error: {e}")
+    print("✅ Database initialized successfully.")
 
-init_db()  # run this when app starts
-
-from flask import Flask, render_template, request, redirect, g
-import sqlite3
-from datetime import datetime
-import openai
-
-app = Flask(__name__)
-DATABASE = 'blogs.db'
-
-def get_db():
-    if 'db' not in g:
-        g.db = sqlite3.connect(DATABASE)
-        g.db.row_factory = sqlite3.Row
-    return g.db
-
-@app.teardown_appcontext
-def close_db(error):
-    db = g.pop('db', None)
-    if db is not None:
-        db.close()
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @app.route("/")
 def home():
-    db = get_db()
+    db = get_db_connection()
     posts = db.execute("SELECT * FROM posts ORDER BY views DESC LIMIT 10").fetchall()
-    return render_template("index.html", posts=posts)
-
-@app.route("/generate", methods=["GET", "POST"])
-def generate():
-    if request.method == "POST":
-        idea = request.form["idea"]
-        emotion = request.form["emotion"]
-        perspective = request.form["perspective"]
-        prompt = f"Write a positive blog post about {idea}, based on the emotion {emotion}, from the perspective of {perspective}."
-        openai.api_key = "sk-REPLACE_ME"
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        content = response.choices[0].message.content.strip()
-        db = get_db()
-        db.execute("""
-            INSERT INTO posts (idea, emotion, perspective, content, created_at, views)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (idea, emotion, perspective, content, datetime.utcnow(), 0))
-        db.commit()
-        return redirect("/all")
-    return render_template("generate.html")
-
-@app.route("/recent")
-def recent():
-    db = get_db()
-    posts = db.execute("SELECT * FROM posts ORDER BY created_at DESC LIMIT 10").fetchall()
-    return render_template("recent.html", posts=posts)
+    db.close()
+    return render_template("home.html", posts=posts)
 
 @app.route("/all")
-def all():
-    db = get_db()
-    posts = db.execute("SELECT * FROM posts ORDER BY created_at DESC").fetchall()
+def all_blogs():
+    db = get_db_connection()
+    posts = db.execute("SELECT * FROM posts ORDER BY id DESC").fetchall()
+    db.close()
     return render_template("all.html", posts=posts)
 
-@app.route("/post/<int:post_id>")
-def view_post(post_id):
-    db = get_db()
-    db.execute("UPDATE posts SET views = views + 1 WHERE id = ?", (post_id,))
-    db.commit()
-    post = db.execute("SELECT * FROM posts WHERE id = ?", (post_id,)).fetchone()
-    return render_template("view_post.html", post=post)
+@app.route("/recent")
+def recent_blogs():
+    db = get_db_connection()
+    posts = db.execute("SELECT * FROM posts ORDER BY id DESC LIMIT 5").fetchall()
+    db.close()
+    return render_template("recent.html", posts=posts)
+
+@app.route("/generate", methods=["GET", "POST"])
+def generate_blog():
+    if request.method == "POST":
+        title = request.form["title"]
+        content = request.form["content"]
+        idea = request.form.get("idea", "")
+        emotion = request.form.get("emotion", "")
+        perspective = request.form.get("perspective", "")
+        db = get_db_connection()
+        db.execute("INSERT INTO posts (title, content, idea, emotion, perspective) VALUES (?, ?, ?, ?, ?)", 
+                   (title, content, idea, emotion, perspective))
+        db.commit()
+        db.close()
+        return redirect(url_for("all_blogs"))
+    return render_template("generate.html")
 
 @app.route("/health")
 def health():
     return "OK"
+
+if __name__ == "__main__":
+    init_db()
+    app.run(debug=True)
