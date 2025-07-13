@@ -1,7 +1,0 @@
-.container { max-width: 800px; margin: auto; padding: 20px; font-family: sans-serif; }
-.btn { padding: 8px 12px; margin-right: 5px; text-decoration: none; color: white; background-color: #007BFF; border-radius: 5px; }
-.btn-success { background-color: #28a745; }
-.btn-primary { background-color: #007bff; }
-.btn-secondary { background-color: #6c757d; }
-.btn-info { background-color: #17a2b8; }
-.generate-button { margin-top: 20px; }
